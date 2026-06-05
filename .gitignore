@@ -1,0 +1,16 @@
+# Compiled binaries
+roche_velocity_scan
+*.o
+*.out
+*.exe
+
+# Generated trajectory files
+*.csv
+
+# macOS
+.DS_Store
+
+# Editor files
+.vscode/
+*.swp
+EOF

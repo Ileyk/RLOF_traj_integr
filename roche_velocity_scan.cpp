@@ -1,3 +1,6 @@
+// g++ -std=c++17 -O3 roche_velocity_scan.cpp -o roche_velocity_scan
+// ./roche_velocity_scan 1 0.001 0.1 0 1e-3 roche roche_summary.csv 4 1e-2 2
+
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -243,10 +246,10 @@ IntegrationResult integrate_trajectory(
     const Params& p,
     double L1,
     double v0,
-    double dt
+    double dt,
+    double t_max
 ) {
     const double pi = std::acos(-1.0);
-    const double t_max = 8.0 * pi;
 
     State s;
     s.x = 0.0;
@@ -374,6 +377,7 @@ ConvergenceResult integrate_until_converged(
     double v0,
     double initial_dt,
     double tolerance,
+    double t_max,
     int max_refinements
 ) {
     if (initial_dt <= 0.0) {
@@ -384,13 +388,13 @@ ConvergenceResult integrate_until_converged(
         throw std::runtime_error("The convergence tolerance must be positive.");
     }
 
-    IntegrationResult coarse = integrate_trajectory(p, L1, v0, initial_dt);
+    IntegrationResult coarse = integrate_trajectory(p, L1, v0, initial_dt, t_max);
 
     double dt = 0.5 * initial_dt;
     double last_error = 1.0e99;
 
     for (int refinement = 1; refinement <= max_refinements; ++refinement) {
-        IntegrationResult fine = integrate_trajectory(p, L1, v0, dt);
+        IntegrationResult fine = integrate_trajectory(p, L1, v0, dt, t_max);
 
         last_error = trajectory_error(coarse, fine);
         const bool same_stop = same_stopping_behavior(coarse, fine);
@@ -472,13 +476,7 @@ std::string stop_explanation(int stop_reason) {
 
 void write_trajectory_csv(
     const std::string& output_name,
-    const Params& p,
     double v0,
-    double L_outer_donor,
-    double L1,
-    double L_outer_accretor,
-    double initial_dt,
-    double tolerance,
     const ConvergenceResult& conv
 ) {
     std::ofstream out(output_name);
@@ -489,23 +487,8 @@ void write_trajectory_csv(
 
     out << std::setprecision(16);
 
-    out << "# Roche trajectory in dimensionless units\n";
-    out << "# length_unit=a\n";
-    out << "# time_unit=Omega_inverse\n";
-    out << "# velocity_unit=a_Omega\n";
-    out << "# q=" << p.q << "\n";
-    out << "# Gamma=" << p.Gamma << "\n";
     out << "# v0=" << v0 << "\n";
-    out << "# mu1=" << p.mu1 << "\n";
-    out << "# mu2=" << p.mu2 << "\n";
-    out << "# mu1_eff=" << p.mu1_eff << "\n";
-    out << "# y_center_of_mass=" << p.yG << "\n";
-    out << "# L_outer_donor=" << L_outer_donor << "\n";
-    out << "# L1_inner=" << L1 << "\n";
-    out << "# L_outer_accretor=" << L_outer_accretor << "\n";
-    out << "# initial_dt=" << initial_dt << "\n";
     out << "# final_dt=" << conv.result.dt << "\n";
-    out << "# convergence_tolerance=" << tolerance << "\n";
     out << "# convergence_max_error=" << conv.max_error << "\n";
     out << "# convergence_refinements=" << conv.refinements << "\n";
     out << "# convergence_success=" << (conv.converged ? 1 : 0) << "\n";
@@ -536,6 +519,7 @@ void write_summary_csv(
     double L_outer_accretor,
     double initial_dt,
     double tolerance,
+    double t_max,
     int max_refinements,
     const std::vector<SummaryRow>& rows
 ) {
@@ -565,6 +549,7 @@ void write_summary_csv(
     out << "# L_outer_accretor=" << L_outer_accretor << "\n";
     out << "# initial_dt=" << initial_dt << "\n";
     out << "# convergence_tolerance=" << tolerance << "\n";
+    out << "# t_max=" << t_max << "\n";
     out << "# max_refinements=" << max_refinements << "\n";
 
     out << "index,v0,trajectory_file,final_dt,converged,max_error,refinements,"
@@ -600,6 +585,7 @@ int main(int argc, char* argv[]) {
 
         double initial_dt = 1.0e-3;
         double tolerance = 1.0e-2;
+        double t_max = 3.1415;
         int max_refinements = 12;
 
         const int n_velocities = 5;
@@ -646,6 +632,10 @@ int main(int argc, char* argv[]) {
             tolerance = std::atof(argv[9]);
         }
 
+        if (argc >= 11) {
+            t_max = std::atof(argv[10]);
+        }
+
         const Params p = make_params(q, Gamma);
 
         const double L_outer_donor = find_left_outer_lagrange_point(p);
@@ -679,18 +669,13 @@ int main(int argc, char* argv[]) {
                 v0,
                 initial_dt,
                 tolerance,
+                t_max,
                 max_refinements
             );
 
             write_trajectory_csv(
                 trajectory_file,
-                p,
                 v0,
-                L_outer_donor,
-                L1,
-                L_outer_accretor,
-                initial_dt,
-                tolerance,
                 conv
             );
 
@@ -735,6 +720,7 @@ int main(int argc, char* argv[]) {
             L_outer_accretor,
             initial_dt,
             tolerance,
+            t_max,
             max_refinements,
             summary_rows
         );

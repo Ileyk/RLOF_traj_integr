@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # python plot.py roche_summary.csv --xlim -1.5 1.5 --ylim -1.0 2.0 --potential-segments 10 --cmap gist_earth -o roche_trajectories_segmented.png
 
+from __future__ import annotations
+
 import argparse
 from pathlib import Path
 
@@ -407,10 +409,9 @@ def plot_roche_trajectories(
     ax.scatter(
         [0.0],
         [0.0],
-        marker="*",
-        s=230,
+        marker="o",
+        s=10,
         color="white",
-        edgecolor="black",
         linewidth=1.0,
         label="Donor star",
         zorder=10,
@@ -419,10 +420,9 @@ def plot_roche_trajectories(
     ax.scatter(
         [0.0],
         [1.0],
-        marker="*",
-        s=230,
-        color="black",
-        edgecolor="white",
+        marker="o",
+        s=10,
+        color="white",
         linewidth=1.0,
         label="Accretor",
         zorder=10,
@@ -447,19 +447,19 @@ def plot_roche_trajectories(
         s=110,
         color="red",
         linewidths=2.2,
-        label="Collinear Lagrangian points",
+        label="Lagrangian points",
         zorder=10,
     )
 
     # Labels.
     x_label_offset = 0.02 * (xlim[1] - xlim[0])
 
-    ax.text(x_label_offset, L_outer_donor, r"$L_{\rm out,donor}$", va="center")
-    ax.text(x_label_offset, L1, r"$L_1$", va="center")
-    ax.text(x_label_offset, L_outer_accretor, r"$L_{\rm out,accretor}$", va="center")
-    ax.text(x_label_offset, 0.0, "donor", va="center")
-    ax.text(x_label_offset, 1.0, "accretor", va="center")
-    ax.text(x_label_offset, yG, "G", va="center")
+    # ax.text(x_label_offset, L_outer_donor, r"$L_{\rm out,donor}$", va="center")
+    # ax.text(x_label_offset, L1, r"$L_1$", va="center")
+    # ax.text(x_label_offset, L_outer_accretor, r"$L_{\rm out,accretor}$", va="center")
+    # ax.text(x_label_offset, 0.0, "donor", va="center")
+    # ax.text(x_label_offset, 1.0, "accretor", va="center")
+    # ax.text(x_label_offset, yG, "G", va="center")
 
     ax.set_xlabel(r"$x/a$")
     ax.set_ylabel(r"$y/a$")
